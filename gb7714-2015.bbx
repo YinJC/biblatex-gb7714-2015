@@ -156,6 +156,28 @@
       \settoggle{bbx:titlelink}{#1}}
 
     %
+    %   增加一个控制参考文献标题是否能够被ctex宏包设置的选项
+    %   v1.0l, 2018.07.02, by hzz
+    %
+    %   原理方法:
+    %   重定义biblatex的宏，去除使用本地化字符串的方式，是的可以利用ctexset进行设置
+    \newtoggle{bbx:ctexset}
+    \DeclareBibliographyOption{gbctexset}[true]{%
+      \settoggle{bbx:ctexset}{#1}}
+
+    \AtEndOfPackage{%
+	\iftoggle{bbx:ctexset}{%
+        \def\blx@defbibstrings#1#2{%
+          \def\do##1{\csundef{abx@lstr@##1}\csundef{abx@sstr@##1}}%
+          \abx@dostrings
+          \csuse{abx@strings@#1}%
+          \setkeys{blx@lbx}{#2}%
+          \let\do\blx@defbibstrings@i
+          \csxdef{abx@strings@#1}{\abx@dostrings}%
+        }
+	}{}}
+
+    %
     %   增加一个恢复域格式为标准样式的控制选项
     %   v1.0k, 2018.05.15, by hzz
     %
@@ -279,6 +301,7 @@
       gbbiblabel=bracket,
       gbnamefmt=uppercase,
       gbalign=right,
+      gbctexset=true,
       %urldate =edtf, %针对3.7<=biblatex<=3.9版本的选项设置，比如texlive2017中的3.7版
       %eventdate =edtf,%针对3.7<=biblatex<=3.9版本的选项设置，比如texlive2017中的3.7版
       urldate =gb7714-2015, %iso，针对3.10<=biblatex版本的选项设置，比如texlive2018中的3.11版
