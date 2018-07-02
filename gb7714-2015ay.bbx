@@ -195,12 +195,11 @@
 %=====================================================================
 %   数据模型定义
 %=====================================================================
-%定义类型和载体标识，从gb内容看载体基本属于介质。
-%为与lee zeping的bst的样式统一，使用mark和medium这两域名
-\DeclareDatamodelFields[type=field,datatype=literal]{mark}
-\DeclareDatamodelFields[type=field,datatype=literal]{medium}
-\DeclareDatamodelFields[type=field,datatype=literal]{nameformat}
-\DeclareDatamodelFields[type=field,datatype=integer]{namefmtid}
+    %定义类型和载体标识，从gb内容看载体基本属于介质。
+    %为与lee zeping的bst的样式统一，使用mark和medium这两域名
+    %为单个条目的姓名格式控制增加nameformat和namefmtid两个域
+    \DeclareDatamodelFields[type=field,datatype=literal]{mark,medium,nameformat}
+    \DeclareDatamodelFields[type=field,datatype=integer]{namefmtid}
 
 
 
@@ -277,6 +276,29 @@
       \settoggle{bbx:titlelink}{#1}}
     \ExecuteBibliographyOptions{gbtitlelink}
 
+    %
+    %   增加一个控制参考文献标题是否能够被ctex宏包设置的选项
+    %   v1.0l, 2018.07.02, by hzz
+    %
+    %   原理方法:
+    %   重定义biblatex的宏，去除使用本地化字符串的方式，是的可以利用ctexset进行设置
+    \newtoggle{bbx:ctexset}
+    \DeclareBibliographyOption{gbctexset}[true]{%
+      \settoggle{bbx:ctexset}{#1}}
+    \ExecuteBibliographyOptions{gbctexset}
+
+    \AtEndOfPackage{%
+	\iftoggle{bbx:ctexset}{%
+        \def\blx@defbibstrings#1#2{%
+          \def\do##1{\csundef{abx@lstr@##1}\csundef{abx@sstr@##1}}%
+          \abx@dostrings
+          \csuse{abx@strings@#1}%
+          \setkeys{blx@lbx}{#2}%
+          \let\do\blx@defbibstrings@i
+          \csxdef{abx@strings@#1}{\abx@dostrings}%
+        }
+	}{}}
+
 
     %
     %   增加一个恢复域格式为标准样式的控制选项
@@ -322,20 +344,23 @@
       sortlocale=zh__pinyin,
     }
 
-\csdef{mkdaterangegb7714-2015}#1{%
-  \begingroup
-    \blx@metadateinfo{#1}%
-    \iffieldundef{#1year}
-      {}
-      {\printtext[#1date]{%
-         \blx@gbdate{#1}{}}}%
-  \endgroup}
+    %
+    %为日期相关选项增加选项值gb7714-2015
+    %
+    \csdef{mkdaterangegb7714-2015}#1{%
+      \begingroup
+        \blx@metadateinfo{#1}%
+        \iffieldundef{#1year}
+          {}
+          {\printtext[#1date]{%
+             \blx@gbdate{#1}{}}}%
+      \endgroup}
 
-\newrobustcmd*{\blx@gbdate}[3][]{%
-  \dateeraprintpre{#2#3year}%
-  \blx@imc@forcezerosy{\thefield{#2#3year}}\ifblank{#1}{}{\printfield{#1}}%
-    \iffieldundef{#2#3month}{}{\hyphen\blx@imc@forcezerosmdt{\thefield{#2#3month}}}%
-     \iffieldundef{#2#3day}{}{\hyphen\blx@imc@forcezerosmdt{\thefield{#2#3day}}}}
+    \newrobustcmd*{\blx@gbdate}[3][]{%
+      \dateeraprintpre{#2#3year}%
+      \blx@imc@forcezerosy{\thefield{#2#3year}}\ifblank{#1}{}{\printfield{#1}}%
+        \iffieldundef{#2#3month}{}{\hyphen\blx@imc@forcezerosmdt{\thefield{#2#3month}}}%
+         \iffieldundef{#2#3day}{}{\hyphen\blx@imc@forcezerosmdt{\thefield{#2#3day}}}}
 
     %为姓名格式选择增加的计数器
     \newcounter{namefmtcase}
@@ -463,8 +488,6 @@
     %   新建当地化字符串，用来记录“等”字符
     %
     \NewBibliographyString{andotherscn}
-    \NewBibliographyString{noaddress}
-    \NewBibliographyString{nopublisher}
 
     %
     %   修改一些当地化字符串
@@ -472,15 +495,13 @@
     %   原理方法:直接利用当地化格式english修改出一些中文的格式，具体修改内容参考english.lbx文件
     %   当然也可以增加比如上面定义的andotherscn
     %   注意:在lbx文件和bbx文件中定义本地字符串的不同语法，两个参数和一个参数的区别
-\DefineBibliographyStrings{english}{
+    \DefineBibliographyStrings{english}{
         bibliography     = {\str@bibliography},
         references       = {\str@references},
-    bytranslator= {\addcomma\ \str@bytranslator\adddot}, %将trans. by 改成 译
-    and         = {\addcomma},%将第2和3人名见的and符号改成 逗号，用\finalnamedelim命令也可以定义，参见3.9.1节
-    %andothers   = {et al.},        %将超过3个人名的省略，et al.改成为 等
+        bytranslator= {\addcomma\ \str@bytranslator\adddot}, %将trans. by 改成 译
+        and         = {\addcomma},%将第2和3人名见的and符号改成 逗号，用\finalnamedelim命令也可以定义，参见3.9.1节
+        %andothers   = {et al.},        %将超过3个人名的省略，et al.改成为 等
         andotherscn   = {\str@andotherscn},     %将超过3个人名的省略，et al.改成为 等
-    noaddress = {[S.l.]},
-    nopublisher = {[s.n.]},
         backrefpage = {\str@backrefpage:},
         backrefpages = {\str@backrefpages:},
         in={in\intitlepunct},
